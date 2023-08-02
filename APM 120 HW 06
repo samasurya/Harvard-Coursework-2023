@@ -1,0 +1,149 @@
+# -*- coding: utf-8 -*-
+"""
+Spyder Editor
+
+This is a temporary script file.
+"""
+import pandas as pd
+
+import numpy as np
+
+
+import matplotlib.pyplot as plt
+
+#Q1
+A = np.array([[-2, -4, 0], [4, -0, 0],[0, -8, 0], [-2, -20, 0]])
+b = np.array([[-1], [-3], [-1],[-3]])
+#print(np.linalg.inv(A.T @ A))
+
+print("A.T @ A is a singular matrix with no inverse. So for the") 
+print("Over-determined system with more equations than unknowns and with a singular A.T @ A,")
+print("we have infinite number of solutions, so we choose the solution which minimizes the residuals.")
+print("The solution in this case which minimizes the residuals is x = pinv(A.T @ A) @ A.T @ b")
+x = np.linalg.pinv(A.T @ A) @ A.T @ b
+print("x = ");print(x)
+
+np.linalg.matrix_rank(A.T @ A)
+
+r = A@x - b
+x1 = np.array([[-0.58333333],[0.20833333],[100]])
+
+lst_sol = np.linalg.lstsq(A, b)
+
+
+A1 = np.array([[3,6,1], [6,12,2]])
+b1 = np.array([[-5], [-4]])
+x2 = np.linalg.pinv(A1.T @ A1) @ A1.T @ b1
+print(x2)
+
+
+#Q2
+A2= np.array([[-4, -1, -1], [8, -10, 0], [2, 5, -2], [-7, 0, -7], [-7, 1, -3]])
+b2 = np.array([[-7], [-3], [-6], [-2], [-9]])
+x_2 = np.linalg.lstsq(A2, b2)[0]
+U,S,V = np.linalg.svd(A2)
+plt.figure(figsize = (10,5))
+plt.semilogy(S)
+plt.title("Log Singular Values")
+plt.xlabel("n")
+plt.ylabel("$\log(\sigma_n)$")
+print("From the plot we can see that 2 singular values are enough to reconstruct the matrix to capture majority of variation in the dataset")
+A_recon = U[:, 0:2] @ np.diag(S[0:2]) @ V[0:2,:]
+x_recona = np.linalg.pinv(A_recon.T @ A_recon) @ A_recon.T @ b2
+Q = np.linalg.qr(A_recon)[0]
+R = Q.T @ A_recon
+
+
+
+#Q3
+F=np.array([[-0.8, -14, 2.4, -8.4, 4, -2.4, 6, 4, 8.8],[-7.2, 22, -8.8, 15, -8, 6.4, -8, -2, -8.8],
+    [26, 3.2, 14, -2.4, 4, -7.2, -6, -14, -18]])
+
+import scipy.linalg
+
+
+U,S,V = scipy.linalg.svd(F)
+print("The Principal components of Matrix F computed using SVD are:"); print(U)
+
+S_1 = np.zeros((9,9))
+for i in range(3):
+    S_1[i, i] = S[i]
+
+T = S_1 @ V
+print("the Expansion Coefficients of the Matrix F are: "); print(T)
+means_f = np.mean(F, axis = 1); means_f.shape = (3,1)
+F_norm = F - means_f
+C = (F_norm @ F_norm.T) * 1/9
+
+D, V = np.linalg.eig(C)
+idx = np.abs(D).argsort(); idx=idx[::-1]
+D = D[idx]
+V = V[:,idx]
+print(V)
+T_c = V.T @ F
+print(T_c)
+
+
+#Q4
+X= np.array([[ 0.1, 2.8, 3.5, 0.5, 1.2, 4, 2.1, 0, 2.9, 3.6, 0.4, 1.1],
+[3.8, 1.4, 0.5, 3.3, 2.7, 0, 1.7, 4.1, 1.1, 0.5, 3.5, 2.9],
+[9.7, -1.3, -4.2, 8.1, 5.3, -5.8, 1.8, 9.9, -1.5, -4.2, 8.2, 5.5],
+[9.9, -1.7, -4.3, 8.5, 5.7, -5.8, 2.3, 9.7, -1.5, -4.3, 8.3, 5.5]])
+
+Y=np.array([[-7.6, -3.6, -2.8, -6.9, -6.1, -2.2, -4.9, -7.4, -3.9, -2.7, -7, -6.1],
+[-2.1, -6.5, -7.4, -2.9, -3.8, -8.1, -5.1, -2.4, -6.3, -7.5, -2.8, -3.8],
+[-2.7, -6, -6.9, -3.1, -4, -7.3, -5, -2.7, -6, -6.9, -3.1, -4]])
+means_x = np.mean(X, axis = 1); means_x.shape = (4,1); means_y = np.mean(Y, axis = 1); means_y.shape = (3,1)
+X_demean = X -  means_x ; Y_demean = Y - means_y
+squares_x = []
+for i in range(4):
+    for j in range(12):
+        x = X_demean[i,j]**2
+        squares_x.append(x)
+squares_y = []
+for i in range(3):
+    for j in range(12):
+        y = Y_demean[i,j]**2
+        squares_y.append(y)
+sigma_x = np.sqrt((1/48) * np.sum(squares_x)); sigma_y = np.sqrt((1/36) * np.sum(squares_y))
+X_norm = X_demean * (1/sigma_x); Y_norm = Y_demean * (1/sigma_y)
+XY = np.vstack([X_norm, Y_norm])
+
+U1, S1, V1 = scipy.linalg.svd(XY)
+
+fracs_var = []
+for i in range(7):
+    fv = S1[i]**2 / (np.sum(S1**2))
+    fracs_var.append(fv)
+print("The Fractions of variances of the combined dataset explained by modes of PCs are: "); print(fracs_var)
+print("Since the fraction of Variance explained by the first PC is 99.9%,")
+print("only the first PC is needed to explain 50% of the total variance of the combined dataset.")
+print(U1)
+print(fracs_var)
+
+
+cov_xy = (X_demean @ Y_demean.T) * 1/12
+
+U2, S2, V2 = scipy.linalg.svd(cov_xy)
+
+squares_xy = []
+for i in range(4):
+    for j in range(3):
+        x = cov_xy[i,j]**2
+        squares_xy.append(x)
+
+total_cov = np.sum(squares_xy)
+total_cov_svd = np.sum(S2**2)
+fracs_cov = []
+for i in range(3):
+    fcv = S2[i]**2 / (np.sum(S2**2))
+    fracs_cov.append(fcv)
+print(U2)
+print(fracs_cov)
+print("Since the fraction of Covariance explained by the first PC is 99.99%,")
+print("only the first PC is needed to explain 50% of the total covariance of the combined dataset.")
+
+
+
+
+
